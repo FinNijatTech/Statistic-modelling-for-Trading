@@ -1,0 +1,68 @@
+---
+title: "Final Project"
+author: "Aziz Aliev"
+date: "2023-12-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+#DATA
+
+## Importing Libraries
+```{r}
+library(xts)
+library(quantmod)
+library(data.table)
+library(pryr)
+library(quantreg)
+library(TTR)
+library(caTools)
+library(roll)
+library(rbenchmark)
+library(microbenchmark)
+library(urca)
+library(chron)
+library(tseries)
+library(PerformanceAnalytics)
+library(lubridate)
+library(scales)
+library(RColorBrewer)
+library(dplyr)
+library(lattice)
+library(grDevices)
+```
+
+## Adding Functions
+```{r}
+source("https://raw.githubusercontent.com/ptwojcik/HFD/master/function_positionVB.R")
+source("https://raw.githubusercontent.com/ptwojcik/HFD/master/functions_plotPositions.R")
+source("https://raw.githubusercontent.com/ptwojcik/HFD/master/function_mySR.R")
+source("https://raw.githubusercontent.com/ptwojcik/HFD/master/functions_plotHeatmap.R")
+source("https://raw.githubusercontent.com/ptwojcik/HFD/master/function_positionVB_new.R")
+source("https://raw.githubusercontent.com/ptwojcik/HFD/master/function_mySR.R")
+source("https://raw.githubusercontent.com/ptwojcik/HFD/master/functions_plotHeatmap.R")
+source("https://raw.githubusercontent.com/ptwojcik/HFD/master/function_positionVB_new.R")
+source("https://raw.githubusercontent.com/ptwojcik/HFD/master/function_mySR.R")
+source("https://raw.githubusercontent.com/ptwojcik/HFD/master/functions_plotHeatmap.R")
+source("https://raw.githubusercontent.com/ptwojcik/HFD/master/function_positionVB_new.R")
+source("functions/function_testdf.R")
+source("functions/grangerTest.R")
+source("functions/plotMaxDD.R")
+```
