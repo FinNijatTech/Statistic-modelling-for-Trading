@@ -43,16 +43,13 @@ myCalmarRatio <- function(x, # x = series of returns
                           scale) {
   scale * mean(coredata(x), na.rm = TRUE) / 
     maxdrawdown(cumsum(x))$maxdrawdown
-  
 }
 
-# lets change the LC_TIME option to English
+# Let's change the LC_TIME option to English
 Sys.setlocale("LC_TIME", "English")
 
-# lets define the system time zone as America/New_York (used in the data)
+# Let's define the system time zone as America/New_York (used in the data)
 Sys.setenv(TZ = 'America/New_York')
-
-# do it simply in a loop on quarters
 
 for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4", 
                            "2022_Q2", "2022_Q4", 
@@ -60,7 +57,7 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
   
   message(selected_quarter)
   
-  # loading the data for a selected quarter from a subdirectory "data""
+  # loading the data for a selected quarter from a sub-directory "data""
   
   filename_ <- paste0("data/data1_", selected_quarter, ".RData")
   
@@ -74,8 +71,7 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
   
   # the following common assumptions were defined:
   # 1.	do not use in calculations the data from the first 
-  # and last 15 minutes of the session (9:31--9:45 and 15:46--16:00)
-  # – put missing values there,
+  # and last 10 minutes of the session (9:31-9:40 and 15:51-16:00)
   
   # lets put missing values for these periods
   data.group1["T09:31/T09:45",] <- NA 
@@ -124,7 +120,7 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
   data.group1$positionSP.mom <- na.locf(data.group1$positionSP.mom, na.rm = FALSE)
   data.group1$positionNQ.mom <- na.locf(data.group1$positionNQ.mom, na.rm = FALSE)
   
-  # calculating gross pnl
+  # calculating gross P&L
   
   data.group1$pnl_grossNQ.mom <- data.group1$positionNQ.mom * diff.xts(data.group1$NQ) * 20
   data.group1$pnl_grossSP.mom <- data.group1$positionSP.mom * diff.xts(data.group1$SP) * 50
@@ -137,7 +133,7 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
   data.group1$ntransSP.mom[1] <- 0
   data.group1$ntransNQ.mom[1] <- 0
   
-  # net pnl
+  # net P&L
   data.group1$pnl_netNQ.mom <- data.group1$pnl_grossNQ.mom  -
     data.group1$ntransNQ.mom * 10 # 10$ per transaction
   
@@ -150,7 +146,7 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
   data.group1$pnl_net.mom <- data.group1$pnl_netNQ.mom + data.group1$pnl_netSP.mom
   
   
-  # aggregate pnls and number of transactions to daily
+  # aggregate P&Ls and number of transactions to daily
   my.endpoints <- endpoints(data.group1, "days")
   
   data.group1.daily <- period.apply(data.group1[,c(grep("pnl", names(data.group1)),
@@ -160,24 +156,23 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
   
   # summarize the strategy for this quarter
   
-  # SR
+  # Sharpe Ratio
   grossSR = mySR(x = data.group1.daily$pnl_gross.mom, scale = 252)
   netSR = mySR(x = data.group1.daily$pnl_net.mom, scale = 252)
-  # CR
+  # Calmar Ratio
   grossCR = myCalmarRatio(x = data.group1.daily$pnl_gross.mom, scale = 252)
   netCR = myCalmarRatio(x = data.group1.daily$pnl_net.mom, scale = 252)
   
   # average number of transactions
   av.daily.ntrades = mean(data.group1.daily$ntransSP.mom + 
                             data.group1.daily$ntransNQ.mom, na.rm = TRUE)
-  # PnL
+  # P&L
   grossPnL = sum(data.group1.daily$pnl_gross.mom)
   netPnL = sum(data.group1.daily$pnl_net.mom)
   # stat
   stat = netCR * max(0, log(abs(netPnL/1000)))
   
   # collecting all statistics for a particular quarter
-  
   quarter_stats <- data.frame(quarter = selected_quarter,
                               assets.group = 1,
                               grossSR,
@@ -188,29 +183,27 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
                               grossPnL,
                               netPnL,
                               stat,
-                              stringsAsFactors = FALSE
-  )
+                              stringsAsFactors = FALSE)
   
   # collect summaries for all quarters
   if(!exists("quarter_stats.all.group1")) quarter_stats.all.group1 <- quarter_stats else
     quarter_stats.all.group1 <- rbind(quarter_stats.all.group1, quarter_stats)
   
-  # create a plot of gros and net pnl and save it to png file
-  png(filename = paste0("pnl_group1_", selected_quarter, ".png"),
+  # create a plot of Gross and Net P&L and save it to png file
+  png(filename = paste0("P&L Group 1 - ", selected_quarter, ".png"),
       width = 1000, height = 600)
   
   print( # when plotting in a loop you have to use print()
     plot(cbind(cumsum(data.group1.daily$pnl_gross.mom),
                cumsum(data.group1.daily$pnl_net.mom)),
          multi.panel = FALSE,
-         main = paste0("Gross and net PnL for asset group 1 \n quarter ", selected_quarter), 
+         main = paste0("Gross and Net P&L for Group 1 \nquarter ", selected_quarter), 
          col = c("#377EB8", "#E41A1C"),
          major.ticks = "weeks", 
          grid.ticks.on = "weeks",
          grid.ticks.lty = 3,
          legend.loc = "topleft",
-         cex = 1)
-  )
+         cex = 1))
   # closing the png device (and file)
   dev.off()
   
@@ -219,10 +212,9 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
      grossPnL, netPnL, stat, quarter_stats, data.group1.daily)
   
   gc()
-  
-  
+
 } # end of the loop
 
 write.csv(quarter_stats.all.group1, 
-          "quarter_stats.all.group1.csv",
+          "Group 1 - Quarterly Statistics.csv",
           row.names = FALSE)
