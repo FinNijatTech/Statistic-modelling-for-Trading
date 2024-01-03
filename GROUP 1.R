@@ -81,22 +81,21 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
   data.group1$NQ_EMA10 <- EMA(na.locf(data.group1$NQ), 10)
   data.group1$NQ_EMA60 <- EMA(na.locf(data.group1$NQ), 60)
   
-  # and SP
+  # SP
   data.group1$SP_EMA10 <- EMA(na.locf(data.group1$SP), 10)
   data.group1$SP_EMA60 <- EMA(na.locf(data.group1$SP), 60)
   
-  
-  # put missing value whenever the original price is missing
+  # Put missing value whenever the original price is missing
   data.group1$NQ_EMA10[is.na(data.group1$NQ)] <- NA
   data.group1$NQ_EMA60[is.na(data.group1$NQ)] <- NA
   data.group1$SP_EMA10[is.na(data.group1$SP)] <- NA
   data.group1$SP_EMA60[is.na(data.group1$SP)] <- NA
   
   
-  # lets calculate the position for the MOMENTUM strategy
+  # Let's calculate the position for the MOMENTUM strategy
   # if fast MA(t-1) > slow MA(t-1) => pos(t) = 1 [long]
   # if fast MA(t-1) <= slow MA(t-1) => pos(t) = -1 [short]
-  #  caution! this strategy is always in the market !
+  #  caution - this strategy is always in the market!
   data.group1$positionNQ.mom <- ifelse(lag.xts(data.group1$NQ_EMA10) >
                                          lag.xts(data.group1$NQ_EMA60),
                                        1, -1)
@@ -105,7 +104,7 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
                                          lag.xts(data.group1$SP_EMA60),
                                        1, -1)
   
-  # lets apply the remaining assumptions
+  # Remaining assumptions
   # - exit all positions 20 minutes before the session end, i.e. at 15:40
   # - do not trade within the first 30 minutes of stocks quotations (until 10:00)
   data.group1$positioSP.mom[times(times_) <= times("10:00:00") | 
@@ -115,7 +114,7 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
                                times(times_) > times("15:40:00")] <- 0
   
   
-  # lets also fill every missing position with the previous one
+  # Fill every missing position with the previous one
   
   data.group1$positionSP.mom <- na.locf(data.group1$positionSP.mom, na.rm = FALSE)
   data.group1$positionNQ.mom <- na.locf(data.group1$positionNQ.mom, na.rm = FALSE)
@@ -130,10 +129,11 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
   data.group1$ntransSP.mom <- abs(diff.xts(data.group1$positionSP.mom))
   data.group1$ntransNQ.mom <- abs(diff.xts(data.group1$positionNQ.mom))
   
+  # bu hisse ilk deyeri 0 edir, cunki position 2 deyer arasindaki ferqe esasen teyin edilir. Ilk deyerde de ferq olmayacagi ucun silirik.
   data.group1$ntransSP.mom[1] <- 0
   data.group1$ntransNQ.mom[1] <- 0
   
-  # net P&L
+  # Net P&L
   data.group1$pnl_netNQ.mom <- data.group1$pnl_grossNQ.mom  -
     data.group1$ntransNQ.mom * 10 # 10$ per transaction
   
@@ -141,7 +141,6 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
     data.group1$ntransSP.mom * 10 # 10$ per transaction
   
   # total for strategy
-  
   data.group1$pnl_gross.mom <- data.group1$pnl_grossNQ.mom + data.group1$pnl_grossSP.mom
   data.group1$pnl_net.mom <- data.group1$pnl_netNQ.mom + data.group1$pnl_netSP.mom
   
@@ -154,11 +153,12 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
                                     INDEX = my.endpoints, 
                                     FUN = function(x) colSums(x, na.rm = TRUE))
   
-  # summarize the strategy for this quarter
+  # Summarize the strategy for this quarter
   
   # Sharpe Ratio
   grossSR = mySR(x = data.group1.daily$pnl_gross.mom, scale = 252)
   netSR = mySR(x = data.group1.daily$pnl_net.mom, scale = 252)
+  
   # Calmar Ratio
   grossCR = myCalmarRatio(x = data.group1.daily$pnl_gross.mom, scale = 252)
   netCR = myCalmarRatio(x = data.group1.daily$pnl_net.mom, scale = 252)
