@@ -1,6 +1,3 @@
-# setting the working directory if needed
-# setwd("...")
-
 library(xts)
 library(chron)
 library(TTR)
