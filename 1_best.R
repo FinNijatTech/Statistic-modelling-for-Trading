@@ -12,7 +12,7 @@ Sys.setlocale("LC_TIME", "English")
 # mySR function
 mySR <- function(x, scale) {
   sqrt(scale) * mean(coredata(x), na.rm = TRUE) / 
-                sd(coredata(x), na.rm = TRUE)
+    sd(coredata(x), na.rm = TRUE)
 } 
 
 myCalmarRatio <- function(x, # x = series of returns
@@ -24,11 +24,8 @@ myCalmarRatio <- function(x, # x = series of returns
 } # end of definition
 
 
-
 # lets define the system time zone as America/New_York (used in the data)
 Sys.setenv(TZ = 'America/New_York')
-
-# do it simply in a loop on quarters
 
 for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4", 
                            "2022_Q2", "2022_Q4", 
@@ -50,48 +47,47 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
   
   # the following common assumptions were defined:
   # 1.	do not use in calculations the data from the first 
-  # and last 15 minutes of the session (9:31--9:45 and 15:46--16:00)
+  # and last 10 minutes of the session (9:31-9:40 and 15:51-16:00)
   # – put missing values there,
   
   # lets put missing values for these periods
-  data.group1["T09:31/T09:45",] <- NA 
-  data.group1["T15:46/T16:00",] <-NA
+  data.group1["T09:31/T09:40",] <- NA 
+  data.group1["T15:51/T16:00",] <-NA
   
-  # lets calculate EMA10 and EMA60 for NQ
-  data.group1$NQ_EMA10 <- EMA(na.locf(data.group1$NQ), 10)
-  data.group1$NQ_EMA60 <- EMA(na.locf(data.group1$NQ), 60)
+  # lets calculate EMAfast and EMAslow for NQ
+  data.group1$NQ_EMAfast <- EMA(na.locf(data.group1$NQ), 35)
+  data.group1$NQ_EMAslow <- EMA(na.locf(data.group1$NQ), 134)
   
   # and SP
-  data.group1$SP_EMA10 <- EMA(na.locf(data.group1$SP), 10)
-  data.group1$SP_EMA60 <- EMA(na.locf(data.group1$SP), 60)
+  data.group1$SP_EMAfast <- EMA(na.locf(data.group1$SP), 55)
+  data.group1$SP_EMAslow <- EMA(na.locf(data.group1$SP), 80)
   
   
   # put missing value whenever the original price is missing
-  data.group1$NQ_EMA10[is.na(data.group1$NQ)] <- NA
-  data.group1$NQ_EMA60[is.na(data.group1$NQ)] <- NA
-  data.group1$SP_EMA10[is.na(data.group1$SP)] <- NA
-  data.group1$SP_EMA60[is.na(data.group1$SP)] <- NA
+  data.group1$NQ_EMAfast[is.na(data.group1$NQ)] <- NA
+  data.group1$NQ_EMAslow[is.na(data.group1$NQ)] <- NA
+  data.group1$SP_EMAfast[is.na(data.group1$SP)] <- NA
+  data.group1$SP_EMAslow[is.na(data.group1$SP)] <- NA
   
   
   # lets calculate the position for the MOMENTUM strategy
   # if fast MA(t-1) > slow MA(t-1) => pos(t) = 1 [long]
   # if fast MA(t-1) <= slow MA(t-1) => pos(t) = -1 [short]
-  #  caution! this strategy is always in the market !
-  data.group1$positionNQ.mom <- ifelse(lag.xts(data.group1$NQ_EMA10) >
-                                         lag.xts(data.group1$NQ_EMA60),
+  data.group1$positionNQ.mom <- ifelse(lag.xts(data.group1$NQ_EMAfast) >
+                                         lag.xts(data.group1$NQ_EMAslow),
                                        1, -1)
   
-  data.group1$positionSP.mom <- ifelse(lag.xts(data.group1$SP_EMA10) >
-                                         lag.xts(data.group1$SP_EMA60),
+  data.group1$positionSP.mom <- ifelse(lag.xts(data.group1$SP_EMAfast) >
+                                         lag.xts(data.group1$SP_EMAslow),
                                        1, -1)
   
   # lets apply the remaining assumptions
   # - exit all positions 20 minutes before the session end, i.e. at 15:40
-  # - do not trade within the first 30 minutes of stocks quotations (until 10:00)
-  data.group1$positioSP.mom[times(times_) <= times("10:00:00") | 
+  # - do not trade within the first 25 minutes of stocks quotations (until 09:55)
+  data.group1$positionSP.mom[times(times_) <= times("09:55:00") | 
                                times(times_) > times("15:40:00")] <- 0
   
-  data.group1$positionNQ.mom[times(times_) <= times("10:00:00") | 
+  data.group1$positionNQ.mom[times(times_) <= times("09:55:00") | 
                                times(times_) > times("15:40:00")] <- 0
   
   
@@ -196,9 +192,16 @@ for (selected_quarter in c("2021_Q1", "2021_Q3", "2021_Q4",
   
   gc()
   
-
+  
 } # end of the loop
 
 write.csv(quarter_stats.all.group1, 
           "quarter_stats.all.group1.csv",
           row.names = FALSE)
+
+# Assuming quarter_stats.all.group1$netPnL is your vector
+last_7_elements <- tail(quarter_stats.all.group1$netPnL, 7)
+sum_last_7_elements <- sum(last_7_elements)
+
+# Display the result
+print(sum_last_7_elements)
